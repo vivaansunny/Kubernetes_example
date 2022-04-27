@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb1
+spec:
+  #serviceName: mongodb_svc
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mongodb1
+  template:
+    metadata:
+      labels:
+        app: mongodb1
+    spec:
+      containers:
+      - name: mongodb1
+        image: mongo
+      
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: MONGO_INITDB_ROOT_USERNAME
+        - name : MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: MONGO_INITDB_ROOT_PASSWORD
+      nodeSelector:
+        type: virtual-kubelet
+      tolerations:
+      - key: virtual-kubelet.io/provider
+        operator: Equal
+        value: azure
+        effect: NoSchedule
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodbsvc
+spec:
+  selector:
+    app: mongodb1
+  ports:
+  - port: 27017
+    targetPort: 27017
+  
+  
